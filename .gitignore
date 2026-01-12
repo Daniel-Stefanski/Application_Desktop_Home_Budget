@@ -17,3 +17,20 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
+
+# --- Local databases ---
+*.db
+*.db-shm
+*.db-wal
+*.db.lck
+
+# --- Local preferences ---
+*prefs.json
+
+# --- IDE ---
+.idea/
+*.iml
+
+# --- Build ---
+/build/
+**/build/
