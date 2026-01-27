@@ -198,7 +198,6 @@ class DashboardViewModel : ViewModel() {
                 val percentUsed =
                     if (budget > 0.0) (totalSpent / budget * 100.0)
                     else 0.0
-
                 val todayDate = LocalDate.now().toString()
                 val lastWarningDate = Prefs.getLastBudgetWarningDate()
                 val shouldShowWarning = isCurrentMonth && budget > 0.0 && totalSpent > budget && lastWarningDate != todayDate

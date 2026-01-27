@@ -6,18 +6,24 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import java.util.Locale
 
-fun main() = application {
+fun main() {
+    val locale = Locale.forLanguageTag("pl-PL")
     // Wymuszenie polskiego locale
-    Locale.setDefault(Locale.forLanguageTag("pl-PL"))
-    // Start aplikacji zawsze na pełnym ekranie
-    val windowState = rememberWindowState(
-        placement = WindowPlacement.Maximized
-    )
-    Window(
-        onCloseRequest = ::exitApplication,
-        title = "homebudget",
-        state = windowState
-    ) {
-        App()
+    Locale.setDefault(locale)
+    System.setProperty("user.language", "pl")
+    System.setProperty("user.country", "PL")
+    System.setProperty("user.variant", "")
+    application {
+        // Start aplikacji zawsze na pełnym ekranie
+        val windowState = rememberWindowState(
+            placement = WindowPlacement.Maximized
+        )
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = "homebudget",
+            state = windowState
+        ) {
+            App()
+        }
     }
 }

@@ -395,14 +395,30 @@ private fun DashboardContent(
                     .aspectRatio(1f),
                 contentAlignment = Alignment.Center
             ) {
-                // Dynamiczny rozmiar dla tekstu + procentu
-                val chartSize = maxWidth
+                // Przybliżony promień wykresu dp
+                val radiusDp = maxWidth / 2
+                val holeRatio =
+                    when {
+                        radiusDp < 120.dp -> 0.38f
+                        radiusDp < 160.dp -> 0.34f
+                        else -> 0.28f
+                    }
+                // Realny promień miejsca na tekst
+                val innerRediusDp = radiusDp * holeRatio
                 val labelFontSize =
-                    if (chartSize < 260.dp) 12.sp
-                    else 14.sp
+                    when {
+                        radiusDp < 110.dp -> 10.sp
+                        radiusDp < 160.dp -> 12.sp
+                        else -> 14.sp
+                    }
                 val percentFontSize =
-                    if (chartSize < 260.dp) 22.sp
-                    else 30.sp
+                    when {
+                        innerRediusDp < 40.dp -> 12.sp
+                        innerRediusDp < 55.dp -> 16.sp
+                        innerRediusDp < 75.dp -> 20.sp
+                        innerRediusDp < 100.dp -> 24.sp
+                        else -> 30.sp
+                    }
                 PieChart(
                     data = state.categories.map { it.amount.toFloat() },
                     labels = state.categories.map { it.name },
@@ -413,10 +429,13 @@ private fun DashboardContent(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Łącznie wydano",
-                        fontSize = labelFontSize,
-                        style = MaterialTheme.typography.bodyMedium)
+                    if (radiusDp > 160.dp) {
+                        Text(
+                            text = "Łącznie wydano",
+                            fontSize = labelFontSize,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                     Text(
                         text = String.format(Locale.forLanguageTag("pl"),"%.1f%%", state.percentUsed),
                         style = MaterialTheme.typography.headlineMedium,
@@ -571,8 +590,8 @@ private fun PieChart(
         // Promień tekstu
         val textRadius = radius * (holeFraction + (1f - holeFraction) / 2f)
         // Dynamiczne skalowanie rozmiaru cionki dla nazwy i procentu
-        val categoryFontSize = (radius * 0.065f).coerceIn(10f, 18f)
-        val percentFontSize = (radius * 0.075f).coerceIn(12f, 22f)
+        val categoryFontSize = (radius * 0.06f).coerceIn(10f, 18f)
+        val percentFontSize = (radius * 0.07f).coerceIn(12f, 22f)
         // Rysowanie segmentów
         data.forEachIndexed { index, value ->
             val sweep = value / total * 360f

@@ -12,11 +12,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.homebudget.utils.locale.AppLocale
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
-import java.util.Locale
 
 @Composable
 fun CalendarDatePickerDialog(
@@ -63,7 +63,7 @@ private fun CalendarHeader(
     onNext: () -> Unit
 ) {
     val monthName = month.month
-        .getDisplayName(TextStyle.FULL, Locale.forLanguageTag("pl"))
+        .getDisplayName(TextStyle.FULL, AppLocale.PL)
         .replaceFirstChar { it.uppercase() }
 
     Row(
@@ -106,7 +106,7 @@ private fun CalendarMonth(
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             daysOfWeek.forEach {
                 Text(
-                    it.getDisplayName(TextStyle.SHORT, Locale.forLanguageTag("pl")),
+                    it.getDisplayName(TextStyle.SHORT, AppLocale.PL),
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodySmall,
