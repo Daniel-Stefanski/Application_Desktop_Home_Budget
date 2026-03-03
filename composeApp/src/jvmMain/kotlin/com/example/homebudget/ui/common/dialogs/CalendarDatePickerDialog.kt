@@ -1,4 +1,4 @@
-package com.example.homebudget.ui.dialogs
+package com.example.homebudget.ui.common.dialogs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

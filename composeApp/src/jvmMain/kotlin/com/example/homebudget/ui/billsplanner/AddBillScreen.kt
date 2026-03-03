@@ -44,7 +44,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.homebudget.ui.dialogs.CalendarDatePickerDialog
+import com.example.homebudget.ui.common.dialogs.CalendarDatePickerDialog
 import com.example.homebudget.ui.common.dropdowns.FormDropdown
 import com.example.homebudget.ui.common.feedback.LoadingState
 import com.example.homebudget.ui.common.fields.ErrorText

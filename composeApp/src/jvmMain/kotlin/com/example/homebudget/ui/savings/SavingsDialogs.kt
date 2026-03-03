@@ -43,7 +43,7 @@ import com.example.homebudget.ui.common.dialogs.FormDialog
 import com.example.homebudget.ui.common.dropdowns.FormDropdown
 import com.example.homebudget.ui.common.fields.FormTextField
 import com.example.homebudget.ui.common.fields.NumberField
-import com.example.homebudget.ui.dialogs.CalendarDatePickerDialog
+import com.example.homebudget.ui.common.dialogs.CalendarDatePickerDialog
 import com.example.homebudget.utils.money.MoneyFormatter
 import com.example.homebudget.viewmodel.savings.SavingsNotification
 import com.example.homebudget.viewmodel.savings.SavingsViewModel

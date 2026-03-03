@@ -51,7 +51,7 @@ import com.example.homebudget.ui.common.feedback.LoadingState
 import com.example.homebudget.ui.common.fields.ErrorText
 import com.example.homebudget.ui.common.fields.FormTextField
 import com.example.homebudget.ui.common.fields.NumberField
-import com.example.homebudget.ui.dialogs.CalendarDatePickerDialog
+import com.example.homebudget.ui.common.dialogs.CalendarDatePickerDialog
 import com.example.homebudget.viewmodel.addexpense.AddExpenseUiState
 import com.example.homebudget.viewmodel.addexpense.AddExpenseViewModel
 import java.time.LocalDate
