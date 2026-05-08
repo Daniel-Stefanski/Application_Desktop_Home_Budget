@@ -1,9 +1,7 @@
 package com.example.homebudget.utils.formatting
 
 import java.time.LocalDate
-import java.time.Month
 import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
 import java.util.Locale
 /**
  * DateFormatter
@@ -16,7 +14,21 @@ import java.util.Locale
  */
 object DateFormatter {
 
-    private val polishLocale = Locale.forLanguageTag("pl")
+    private val polishLocale = Locale.forLanguageTag("pl-PL")
+    private val polishMonths = listOf(
+        "Styczeń",
+        "Luty",
+        "Marzec",
+        "Kwiecień",
+        "Maj",
+        "Czerwiec",
+        "Lipiec",
+        "Sierpień",
+        "Wrzesień",
+        "Październik",
+        "Listopad",
+        "Grudzień"
+    )
 
     private val dayFormatter: DateTimeFormatter =
         DateTimeFormatter.ofPattern("dd.MM.yyyy", polishLocale)
@@ -44,10 +56,7 @@ object DateFormatter {
      * np. "Styczeń 2026"
      */
     fun formatMonth(year: Int, month: Int): String {
-        val monthName = Month.of(month)
-            .getDisplayName(TextStyle.FULL, polishLocale)
-            .replaceFirstChar { it.uppercase() }
-
+        val monthName = polishMonths.getOrElse(month - 1) { "" }
         return "$monthName $year"
     }
 }

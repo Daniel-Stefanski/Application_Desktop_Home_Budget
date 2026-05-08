@@ -132,6 +132,7 @@ class AddBillViewModel(
 
     fun updateDate(date: LocalDate) {
         _uiState.value = _uiState.value.copy(date = date)
+        validate()
     }
 
     fun updateMarkPaid(value: Boolean) {
@@ -145,10 +146,12 @@ class AddBillViewModel(
     private fun validate() {
         val descValid = _uiState.value.description.isNotBlank()
         val amountValid = AmountParser.isValid(_uiState.value.amount)
+        val dateValid = !_uiState.value.date.isBefore(LocalDate.now())
         _uiState.value = _uiState.value.copy(
             descriptionError = if (!descValid) "Wpisz opis" else null,
             amountError = if (!amountValid) "Podaj prawidłową kwotę" else null,
-            isValid = descValid && amountValid
+            dateError = if (!dateValid) "Termin płatności nie może być w przeszłości" else null,
+            isValid = descValid && amountValid && dateValid
         )
     }
 }

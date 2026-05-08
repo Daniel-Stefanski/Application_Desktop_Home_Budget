@@ -12,11 +12,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.homebudget.utils.locale.AppLocale
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.TextStyle
 
 @Composable
 fun CalendarDatePickerDialog(
@@ -62,9 +60,7 @@ private fun CalendarHeader(
     onPrev: () -> Unit,
     onNext: () -> Unit
 ) {
-    val monthName = month.month
-        .getDisplayName(TextStyle.FULL, AppLocale.PL)
-        .replaceFirstChar { it.uppercase() }
+    val monthName = POLISH_MONTHS[month.monthValue - 1]
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -104,9 +100,9 @@ private fun CalendarMonth(
     Column {
         // Dni tygodnia
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            daysOfWeek.forEach {
+            daysOfWeek.forEachIndexed { index, _ ->
                 Text(
-                    it.getDisplayName(TextStyle.SHORT, AppLocale.PL),
+                    POLISH_WEEKDAYS[index],
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodySmall,
@@ -165,3 +161,20 @@ private fun CalendarMonth(
         }
     }
 }
+
+private val POLISH_MONTHS = listOf(
+    "Styczeń",
+    "Luty",
+    "Marzec",
+    "Kwiecień",
+    "Maj",
+    "Czerwiec",
+    "Lipiec",
+    "Sierpień",
+    "Wrzesień",
+    "Październik",
+    "Listopad",
+    "Grudzień"
+)
+
+private val POLISH_WEEKDAYS = listOf("Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd")

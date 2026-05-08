@@ -160,7 +160,12 @@ fun BillsPlannerScreen(
                     } else if (state.bills.isEmpty()) {
                         EmptyState(text = "📝 Brak zaplanowanych rachunków.")
                     } else {
-                        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                             items(state.bills) { bill ->
                                 BillsPlannerCard(
                                     expense = bill,

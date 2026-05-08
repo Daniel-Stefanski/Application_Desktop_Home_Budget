@@ -6,7 +6,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import java.util.Locale
 
-fun main() {
+fun main(args: Array<String>) {
     val locale = Locale.forLanguageTag("pl-PL")
     // Wymuszenie polskiego locale
     Locale.setDefault(locale)
@@ -23,7 +23,22 @@ fun main() {
             title = "homebudget",
             state = windowState
         ) {
-            App()
+            App(initialResetToken = args.findResetToken())
         }
     }
+}
+
+private fun Array<String>.findResetToken(): String? {
+    val tokenArg = firstOrNull { it.startsWith("--reset-token=") }
+        ?.substringAfter("=")
+        ?.takeIf { it.isNotBlank() }
+    if (tokenArg != null) return tokenArg
+
+    val resetUrl = firstOrNull {
+        it.startsWith("homebudget://reset-password") || it.contains("reset-password")
+    } ?: return null
+
+    return resetUrl.substringAfter("token=", missingDelimiterValue = "")
+        .substringBefore("&")
+        .takeIf { it.isNotBlank() }
 }

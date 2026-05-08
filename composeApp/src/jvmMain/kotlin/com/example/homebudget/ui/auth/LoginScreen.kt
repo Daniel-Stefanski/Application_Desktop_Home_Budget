@@ -83,7 +83,7 @@ fun LoginScreen(
                     size = 250.dp
                 )
                 // Tytuł ekranu
-                Text("Logowanie", style = MaterialTheme.typography.headlineMedium)
+                Text("Zaloguj się", style = MaterialTheme.typography.headlineMedium)
                 Spacer(Modifier.height(20.dp))
 
                 // Pole email

@@ -3,6 +3,7 @@ package com.example.homebudget.ui.common.fields
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import com.example.homebudget.utils.money.AmountParser
 
 @Composable
@@ -23,7 +24,11 @@ fun NumberField(
             onValueChange(sanitized)
         },
         label = label,
-        modifier = modifier,
+        modifier = modifier.onFocusChanged { focusState ->
+            if (!focusState.isFocused && AmountParser.isValid(value)) {
+                onValueChange(AmountParser.format(value))
+            }
+        },
         focusRequester = focusRequester,
         maxLength = maxLength,
         isError = isError

@@ -628,7 +628,7 @@ fun ColorPickerDialog(
                                     .border(
                                         width = if (isSelected) 3.dp else 1.dp,
                                         color = if (isSelected)
-                                            MaterialTheme.colorScheme.primary
+                                            Color.Black
                                         else
                                             MaterialTheme.colorScheme.outline,
                                         shape = MaterialTheme.shapes.small

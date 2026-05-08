@@ -175,15 +175,18 @@ private fun AddBillContent(
             value = state.note,
             onValueChange = onNoteChange,
             label = "📝 Notatka (opcjonalna)",
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(110.dp),
             focusRequester = noteFocus,
             singleLine = false,
+            minLines = 4,
             maxLength = 300
         )
 
         Spacer(Modifier.height(16.dp))
 
-        Text("📅 Data rachunku", style = MaterialTheme.typography.labelLarge)
+        Text("📅 Termin płatności", style = MaterialTheme.typography.labelLarge)
         Spacer(Modifier.height(4.dp))
 
         var datePickerExpanded by remember { mutableStateOf(false) }
@@ -220,11 +223,12 @@ private fun AddBillContent(
                 onDismiss = { datePickerExpanded = false }
             )
         }
+        ErrorText(state.dateError)
 
         Spacer(Modifier.height(16.dp))
 
         FormDropdown(
-            label = "🔁 Powtarzaj co",
+            label = "🔁 Powtarzanie rachunku",
             items = state.intervals,
             selectedIndex = state.repeatIntervalIndex,
             onSelectedIndexChange = onIntervalChange,
@@ -250,7 +254,7 @@ private fun AddBillContent(
                     }
             )
             Spacer(Modifier.width(8.dp))
-            Text("✅ Oznacz jako opłacony")
+            Text("✅ Oznacz jako opłacony przy dodaniu")
         }
 
         Spacer(Modifier.height(24.dp))

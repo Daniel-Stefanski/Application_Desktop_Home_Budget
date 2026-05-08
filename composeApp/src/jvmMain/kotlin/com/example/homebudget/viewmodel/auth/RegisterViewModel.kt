@@ -38,15 +38,15 @@ class RegistrationViewModel : ViewModel() {
     val uiState: StateFlow<RegistrationUiState> = _uiState
     // Aktualizacja adresu email
     fun onUsernameChanged(value: String) {
-        _uiState.value = _uiState.value.copy(username = value)
+        _uiState.value = _uiState.value.copy(username = value, usernameError = null)
     }
     // Aktuazlizacja hasła
     fun onPasswordChanged(value: String) {
-        _uiState.value = _uiState.value.copy(password = value)
+        _uiState.value = _uiState.value.copy(password = value, passwordError = null)
     }
     // Aktualizacja potwierdzenia hasła
     fun onConfirmPasswordChanged(value: String) {
-        _uiState.value = _uiState.value.copy(confirmPassword = value)
+        _uiState.value = _uiState.value.copy(confirmPassword = value, confirmPasswordError = null)
     }
     // Aktualizacja nazwy użytkownika
     fun onNameChanged(value: String) {
@@ -62,20 +62,22 @@ class RegistrationViewModel : ViewModel() {
     //Rejestruje nowego użytkownika po poprawnej walidacji formularza.
     fun registerUser(onSuccess: () -> Unit) {
         val state = _uiState.value
-        val termsError = if (!state.acceptedTerms) "Musisz zaakceptować regulamin." else null
+        val email = state.username.trim().lowercase()
+        val termsError = if (!state.acceptedTerms) "Musisz zaakceptować regulamin" else null
         var hasError = false
         val usernameError =
-            if (state.username.isBlank()) "Email jest wymagany"
-            else if (!EmailValidator.isValid(state.username)) "Nie poprawny adres email."
+            if (email.isBlank()) "Email jest wymagany"
+            else if (!EmailValidator.isValid(email)) "Niepoprawny adres email"
             else null
         val passwordError = PasswordValidator.validate(state.password)
         val confirmPasswordError =
-            if (state.password != state.confirmPassword) "Hasła nie są takie same."
+            if (state.password != state.confirmPassword) "Hasła się nie zgadzają"
             else null
         if (usernameError != null || passwordError != null || confirmPasswordError != null || termsError != null) {
             hasError = true
         }
         _uiState.value = state.copy(
+            username = email,
             usernameError = usernameError,
             passwordError = passwordError,
             confirmPasswordError = confirmPasswordError,
@@ -84,17 +86,17 @@ class RegistrationViewModel : ViewModel() {
         )
         if (hasError) return
         viewModelScope.launch {
-            val existingUser = userDao.getUserByUsername(state.username)
+            val existingUser = userDao.getUserByUsername(email)
             if (existingUser != null) {
                 _uiState.value = _uiState.value.copy(
-                    usernameError = "Użytkownik o takim emailu już istnieje."
+                    usernameError = "Email już istnieje"
                 )
                 return@launch
             }
             val trimmedName = state.name.trim().take(20)
             // Tworzenie użytkownika
             val newUser = User(
-                username = state.username,
+                username = email,
                 password = state.password,
                 name = trimmedName,
                 createdAt = System.currentTimeMillis(),

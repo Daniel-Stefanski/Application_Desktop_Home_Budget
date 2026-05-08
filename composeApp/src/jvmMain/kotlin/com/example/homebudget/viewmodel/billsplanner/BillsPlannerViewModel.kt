@@ -9,6 +9,7 @@ import com.example.homebudget.utils.settings.Prefs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.collections.sumOf
 
@@ -50,9 +51,10 @@ class BillsPlannerViewModel : ViewModel() {
 
     fun toggleStatus(expense: Expense) {
         // Jeśli już opłacony -> ignorujemy klik
-        if (expense.status == "opłacony") return
+        if (isPaidStatus(expense.status)) return
         viewModelScope.launch {
             expenseDao.updateStatus(expense.id, "opłacony")
+            expenseDao.updateLastReset(expense.id, System.currentTimeMillis())
             loadBills()
         }
     }
@@ -80,10 +82,22 @@ class BillsPlannerViewModel : ViewModel() {
         option: SortOption
     ): List<Expense> =
         when (option) {
-            SortOption.DATE_ASC -> list.sortedBy { it.date }
-            SortOption.DATE_DESC -> list.sortedByDescending { it.date }
-            SortOption.AMOUNT_ASC -> list.sortedBy { it.amount }
-            SortOption.AMOUNT_DESC -> list.sortedByDescending { it.amount }
+            SortOption.DATE_ASC -> list.sortedWith(
+                compareBy<Expense> { isPaidStatus(it.status) }
+                    .thenBy { it.date }
+            )
+            SortOption.DATE_DESC -> list.sortedWith(
+                compareBy<Expense> { isPaidStatus(it.status) }
+                    .thenByDescending { it.date }
+            )
+            SortOption.AMOUNT_ASC -> list.sortedWith(
+                compareBy<Expense> { isPaidStatus(it.status) }
+                    .thenBy { it.amount }
+            )
+            SortOption.AMOUNT_DESC -> list.sortedWith(
+                compareBy<Expense> { isPaidStatus(it.status) }
+                    .thenByDescending { it.amount }
+            )
         }
 
     private fun checkBillNotifications(bills: List<Expense>) {
@@ -91,7 +105,7 @@ class BillsPlannerViewModel : ViewModel() {
         val thresholds = setOf(7L, 2L, 1L, 0L, -1L)
         for (bill in bills) {
             // Przypominamy tylko o nieopłaconych
-            if (bill.status == "opłacony") continue
+            if (isPaidStatus(bill.status)) continue
 
             // (opcjonalnie) jeśli chcesz tylko stricte rachunki:
             // if (bill.category != "Rachunki") continue
@@ -120,27 +134,41 @@ class BillsPlannerViewModel : ViewModel() {
     fun clearNotifications() {
         _uiState.value = _uiState.value.copy(notification = null)
     }
-    // Resetuje status opłaconych rachunków po rozpoczęciu nowego cyklu
+    // Przesuwa rachunki cykliczne na kolejny termin po rozpoczęciu nowego cyklu
     fun resetPaidBillsIfNeeded() {
         val today = LocalDate.now()
+        val twentyHours = 20 * 60 * 60 * 1000L
 
         viewModelScope.launch {
             val uid = Prefs.getLastLoggedUser() ?: return@launch
             val bills = expenseDao.getRecurringExpenses(uid)
             bills
-                .filter { it.status == "opłacony" }
                 .forEach { bill ->
+                    val timeSinceLastReset = System.currentTimeMillis() - bill.lastReset
+                    if (timeSinceLastReset < twentyHours) {
+                        return@forEach
+                    }
+
                     val billDate = DateConverters.millisToLocalDate(bill.date)
-                    val nextCycleDate = billDate.plusMonths(bill.repeatInterval.toLong())
-                    if (!nextCycleDate.isAfter(today)) {
+                    val monthsPassed = (today.year - billDate.year) * 12 +
+                        (today.monthValue - billDate.monthValue)
+
+                    if (monthsPassed >= bill.repeatInterval) {
+                        val nextCycleDate = billDate.plusMonths(bill.repeatInterval.toLong())
                         expenseDao.updateExpenseDateAndStatus(
                             expenseId = bill.id,
-                            newDate = DateConverters.localDateToStartOfDayMillis(nextCycleDate),
+                            newDate = DateConverters.localDateToStartOfDayMillis(
+                                nextCycleDate,
+                                ZoneId.systemDefault()
+                            ),
                             newStatus = "nieopłacony"
                         )
+                        expenseDao.updateLastReset(bill.id, System.currentTimeMillis())
                     }
                 }
             loadBills()
         }
     }
+    private fun isPaidStatus(status: String): Boolean =
+        status.trim().lowercase().startsWith("op")
 }

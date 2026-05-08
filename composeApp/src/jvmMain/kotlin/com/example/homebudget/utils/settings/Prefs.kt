@@ -37,7 +37,10 @@ object Prefs {
         val savingsDeadlineWarnings: Set<String> = emptySet(),
 
         // Powiadomienie planowania rachunków
-        val billsDeadlineWarnings: Set<String> = emptySet()
+        val billsDeadlineWarnings: Set<String> = emptySet(),
+
+        // Reset hasła
+        val pendingPasswordResetEmail: String? = null
     )
 
     private var data = PrefsData()
@@ -108,4 +111,11 @@ object Prefs {
         data = data.copy(billsDeadlineWarnings = data.billsDeadlineWarnings + key)
         save()
     }
+
+    fun setPendingPasswordResetEmail(email: String?) {
+        data = data.copy(pendingPasswordResetEmail = email)
+        save()
+    }
+
+    fun getPendingPasswordResetEmail(): String? = data.pendingPasswordResetEmail
 }

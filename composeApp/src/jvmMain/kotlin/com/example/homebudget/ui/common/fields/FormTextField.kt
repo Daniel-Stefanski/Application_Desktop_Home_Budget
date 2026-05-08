@@ -25,6 +25,7 @@ fun FormTextField(
     focusRequester: FocusRequester? = null,
     maxLength: Int? = null,
     singleLine: Boolean = true,
+    minLines: Int = 1,
     isError: Boolean = false,
 ) {
     val focusManager = LocalFocusManager.current
@@ -48,6 +49,7 @@ fun FormTextField(
                 } else false
             },
         singleLine = singleLine,
+        minLines = if (singleLine) 1 else minLines,
         isError = isError,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor =

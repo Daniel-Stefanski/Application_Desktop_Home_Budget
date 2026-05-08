@@ -338,12 +338,6 @@ private fun DashboardContent(
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "Podsumowanie Twojego budżetu",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
 
             IconButton(onClick = onPrevMonth) {
@@ -383,8 +377,10 @@ private fun DashboardContent(
         ) {
             // WYKRES
             // Kolor procentu zmienia się na czerwony po przekroczeniu budżetu
+            val hasNoData = state.categories.isEmpty() || state.totalSpent == 0.0
             val percentColor =
                 when {
+                    hasNoData -> MaterialTheme.colorScheme.onSurface
                     state.budget <= 0 -> MaterialTheme.colorScheme.onSurface
                     state.percentUsed > 100 -> MaterialTheme.colorScheme.error
                     else -> MaterialTheme.colorScheme.primary
@@ -418,31 +414,41 @@ private fun DashboardContent(
                         innerRediusDp < 75.dp -> 20.sp
                         innerRediusDp < 100.dp -> 24.sp
                         else -> 30.sp
-                    }
+                }
                 PieChart(
-                    data = state.categories.map { it.amount.toFloat() },
-                    labels = state.categories.map { it.name },
-                    colors = state.categoriesColors(),
+                    data = if (hasNoData) listOf(1f) else state.categories.map { it.amount.toFloat() },
+                    labels = if (hasNoData) listOf("Brak wydatków") else state.categories.map { it.name },
+                    colors = if (hasNoData) listOf(NO_DATA_COLOR) else state.categoriesColors(),
                     modifier = Modifier.fillMaxSize()
                 )
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (radiusDp > 160.dp) {
+                    if (hasNoData) {
+                        Text(
+                            text = "Brak danych\nwprowadzonych",
+                            fontSize = labelFontSize,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    } else if (radiusDp > 160.dp) {
                         Text(
                             text = "Łącznie wydano",
                             fontSize = labelFontSize,
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
-                    Text(
-                        text = String.format(Locale.forLanguageTag("pl"),"%.1f%%", state.percentUsed),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontSize = percentFontSize,
-                        fontWeight = FontWeight.Bold,
-                        color = percentColor
-                    )
+                    if (!hasNoData) {
+                        Text(
+                            text = String.format(Locale.forLanguageTag("pl-PL"),"%.1f%%", state.percentUsed),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontSize = percentFontSize,
+                            fontWeight = FontWeight.Bold,
+                            color = percentColor
+                        )
+                    }
                 }
             }
 
@@ -506,7 +512,7 @@ private fun DashboardContent(
                         onCheckedChange = onToggleUsePreviousBudget,
                         enabled = state.canEditBudget
                     )
-                    Text("Użyj budżetu z poprzedniego miesiąca")
+                    Text("Powtarzaj co miesiąc")
                 }
                 Spacer(Modifier.height(8.dp))
                 Button(
@@ -534,7 +540,7 @@ private fun DashboardContent(
                 Spacer(Modifier.height(8.dp))
 
                 if (state.categories.isEmpty() || state.totalSpent == 0.0) {
-                    Text("Brak wydatków w tym miesiącu.")
+                    Text("Brak danych wprowadzonych")
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         state.categories.forEachIndexed { index, category ->
@@ -672,7 +678,7 @@ private fun PieChart(
     }
 }
 private fun DashboardUiState.categoriesColors(): List<Color> {
-    if (categories.isEmpty()) return listOf(Color(0xFFBDBDBD))
+    if (categories.isEmpty()) return listOf(NO_DATA_COLOR)
     return categories.map { category ->
         val hex = categoryColors[category.name] ?: "#999999"
         colorFromHex(hex)
@@ -687,3 +693,4 @@ private fun colorFromHex(hex: String): Color {
         else -> Color(0xFF999999.toInt())
     }
 }
+private val NO_DATA_COLOR = Color(0xFF8FEAFF)

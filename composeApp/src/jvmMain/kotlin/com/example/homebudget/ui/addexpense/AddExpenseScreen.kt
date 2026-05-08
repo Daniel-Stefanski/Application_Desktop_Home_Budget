@@ -246,9 +246,12 @@ private fun AddExpenseContent(
             value = state.note,
             onValueChange = onNoteChange,
             label = "📝 Notatka (opcjonalnie)",
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(110.dp),
             focusRequester = noteFocus,
             singleLine = false,
+            minLines = 4,
             maxLength = 300
         )
         Spacer(Modifier.height(16.dp))

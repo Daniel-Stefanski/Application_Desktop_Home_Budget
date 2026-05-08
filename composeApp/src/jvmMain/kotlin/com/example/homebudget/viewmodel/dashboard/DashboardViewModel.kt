@@ -51,8 +51,7 @@ class DashboardViewModel : ViewModel() {
     // Aktualizacja wartości budżetu wpisywanej przez użytkownika
     fun onBudgetChanged(value: String) {
         _uiState.value = _uiState.value.copy(
-            budgetInput = value,
-            usePreviousBudget = false // ręczna zmiana wyłącza checkbox
+            budgetInput = value
         )
     }
     // Zapis nowego budżetu miesięcznego do bazy danych
@@ -186,7 +185,7 @@ class DashboardViewModel : ViewModel() {
                 val defaultBudget = getDefaultBudget(user.id, year, month)
                 val budget = when {
                     budgetEntity != null -> budgetEntity.budget
-                    isCurrentMonth && defaultBudget != null -> defaultBudget.budget
+                    defaultBudget != null -> defaultBudget.budget
                     else -> 0.0
                 }
                 val useDefault = when {
@@ -232,18 +231,10 @@ class DashboardViewModel : ViewModel() {
         year: Int,
         month: Int
     ): MonthlyBudget? {
-        var y = year
-        var m = month - 1
-        while (true) {
-            if (m < 1) {
-                m = 12
-                y -= 1
-            }
-            val budget = monthlyBudgetDao.getBudgetForMonth(userId, y, m)
-                ?: return null
-            if (budget.isDefault) return budget
-            m -= 1
-        }
+        val previousBudget = monthlyBudgetDao.getAllBudgetsForUser(userId)
+            .filter { it.year < year || (it.year == year && it.month < month) }
+            .maxWithOrNull(compareBy<MonthlyBudget> { it.year }.thenBy { it.month })
+        return previousBudget?.takeIf { it.isDefault }
     }
     /**
      * Ukrywa dialog ostrzegawczy
