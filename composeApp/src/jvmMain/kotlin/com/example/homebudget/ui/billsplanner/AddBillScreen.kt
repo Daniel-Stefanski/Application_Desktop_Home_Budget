@@ -44,7 +44,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.homebudget.ui.common.dialogs.CalendarDatePickerDialog
+import com.example.homebudget.ui.dialogs.CalendarDatePickerDialog
 import com.example.homebudget.ui.common.dropdowns.FormDropdown
 import com.example.homebudget.ui.common.feedback.LoadingState
 import com.example.homebudget.ui.common.fields.ErrorText
@@ -175,18 +175,15 @@ private fun AddBillContent(
             value = state.note,
             onValueChange = onNoteChange,
             label = "📝 Notatka (opcjonalna)",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(110.dp),
+            modifier = Modifier.fillMaxWidth(),
             focusRequester = noteFocus,
             singleLine = false,
-            minLines = 4,
             maxLength = 300
         )
 
         Spacer(Modifier.height(16.dp))
 
-        Text("📅 Termin płatności", style = MaterialTheme.typography.labelLarge)
+        Text("📅 Data rachunku", style = MaterialTheme.typography.labelLarge)
         Spacer(Modifier.height(4.dp))
 
         var datePickerExpanded by remember { mutableStateOf(false) }
@@ -223,12 +220,11 @@ private fun AddBillContent(
                 onDismiss = { datePickerExpanded = false }
             )
         }
-        ErrorText(state.dateError)
 
         Spacer(Modifier.height(16.dp))
 
         FormDropdown(
-            label = "🔁 Powtarzanie rachunku",
+            label = "🔁 Powtarzaj co",
             items = state.intervals,
             selectedIndex = state.repeatIntervalIndex,
             onSelectedIndexChange = onIntervalChange,
@@ -254,7 +250,7 @@ private fun AddBillContent(
                     }
             )
             Spacer(Modifier.width(8.dp))
-            Text("✅ Oznacz jako opłacony przy dodaniu")
+            Text("✅ Oznacz jako opłacony")
         }
 
         Spacer(Modifier.height(24.dp))

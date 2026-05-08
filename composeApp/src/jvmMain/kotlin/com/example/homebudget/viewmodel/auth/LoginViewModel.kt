@@ -37,7 +37,7 @@ class LoginViewModel : ViewModel() {
         errorMessage = null
 
         if (email.isBlank() || password.isBlank()) {
-            errorMessage = "Nieprawidłowy email lub hasło."
+            errorMessage = "Wszystkie pola muszą być wypełnione."
             return
         }
 
@@ -45,7 +45,7 @@ class LoginViewModel : ViewModel() {
             val user = userDao.getUserByUsername(email)
 
             if (user == null || user.password != password) {
-                errorMessage = "Nieprawidłowy email lub hasło."
+                errorMessage = "Niepoprawny email lub hasło."
                 return@launch
             }
 

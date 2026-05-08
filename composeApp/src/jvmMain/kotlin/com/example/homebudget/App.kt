@@ -24,7 +24,6 @@ import com.example.homebudget.ui.dashboard.DashboardScreen
 import com.example.homebudget.ui.auth.LoginScreen
 import com.example.homebudget.ui.auth.RegisterScreen
 import com.example.homebudget.ui.auth.ResetPasswordScreen
-import com.example.homebudget.ui.auth.SetNewPasswordScreen
 import com.example.homebudget.ui.addexpense.AddExpenseScreen
 import com.example.homebudget.ui.billsplanner.BillsPlannerScreen
 import com.example.homebudget.ui.history.HistoryScreen
@@ -48,7 +47,7 @@ import com.example.homebudget.viewmodel.theme.ThemeViewModel
  * - wyświetlanie Sidebar
  */
 @Composable
-fun App(initialResetToken: String? = null) {
+fun App() {
     // Obsługa motywu aplikacji
     val themeViewModel: ThemeViewModel = viewModel()
     val theme by themeViewModel.theme.collectAsState()
@@ -71,14 +70,10 @@ fun App(initialResetToken: String? = null) {
     )
 
     // Główna nawigacja aplikacji
-    var screen by remember { mutableStateOf(if (initialResetToken.isNullOrBlank()) "login" else "setnewpassword") }
+    var screen by remember { mutableStateOf("login") }
     var editingBillId by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(Unit) {
-        if (!initialResetToken.isNullOrBlank()) {
-            screen = "setnewpassword"
-            return@LaunchedEffect
-        }
         val rememberedId = Prefs.getRememberedUser()
         screen = if (rememberedId != null) "dashboard" else "login"
     }
@@ -138,13 +133,7 @@ fun App(initialResetToken: String? = null) {
 
                     "resetpassword" -> ResetPasswordScreen(
                         onBackToLogin = { screen = "login" },
-                        onSuccessReset = { screen = "login" },
-                        onGoToSetNewPassword = { screen = "setnewpassword" }
-                    )
-
-                    "setnewpassword" -> SetNewPasswordScreen(
-                        initialToken = initialResetToken,
-                        onBackToLogin = { screen = "login" }
+                        onSuccessReset = { screen = "login" }
                     )
 
                     "dashboard" -> {

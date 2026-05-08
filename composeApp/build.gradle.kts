@@ -59,16 +59,10 @@ compose.desktop {
     application {
         mainClass = "com.example.homebudget.MainKt"
 
-        jvmArgs(
-            "-Duser.language=pl",
-            "-Duser.country=PL",
-            "-Duser.variant="
-        )
-
         nativeDistributions {
             targetFormats(TargetFormat.Msi)
             packageName = "HomeBudget"
-            packageVersion = "1.0.0"
+            packageVersion = "1.0.4"
 
             windows {
                 menu = true // Start Menu

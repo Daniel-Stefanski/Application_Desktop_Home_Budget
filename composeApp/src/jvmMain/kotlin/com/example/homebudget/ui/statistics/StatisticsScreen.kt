@@ -1,7 +1,6 @@
 package com.example.homebudget.ui.statistics
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,8 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.homebudget.ui.common.cards.InfoCard
 import com.example.homebudget.ui.common.feedback.EmptyState
 import com.example.homebudget.ui.common.feedback.LoadingState
 import com.example.homebudget.utils.money.MoneyFormatter
@@ -128,27 +126,10 @@ fun StatisticsScreen() {
                     Spacer(Modifier.height(16.dp))
 
                     // 🔹 Podsumowanie roku
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        border = BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
-                        ),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        )
+                    InfoCard(
+                        title = "Podsumowanie roku",
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "Podsumowanie roczne:",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
                             Text(
                                 "💰 Wydatki: ${MoneyFormatter.format(state.yearSpent)}"
                             )
@@ -163,7 +144,6 @@ fun StatisticsScreen() {
                                     "❌ Przekroczono: ${MoneyFormatter.format(-diff)}",
                                 color = if (diff >= 0) Color(0xFF2ECC71) else Color(0xFFE74C3C)
                             )
-                        }
                     }
 
                     Spacer(Modifier.height(24.dp))

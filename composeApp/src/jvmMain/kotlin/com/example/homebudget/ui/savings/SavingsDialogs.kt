@@ -40,12 +40,10 @@ import androidx.compose.ui.unit.dp
 import com.example.homebudget.ui.common.dialogs.BaseDialog
 import com.example.homebudget.ui.common.dialogs.ConfirmDialog
 import com.example.homebudget.ui.common.dialogs.FormDialog
-import com.example.homebudget.ui.common.dialogs.ScrollableDialogContent
 import com.example.homebudget.ui.common.dropdowns.FormDropdown
 import com.example.homebudget.ui.common.fields.FormTextField
 import com.example.homebudget.ui.common.fields.NumberField
-import com.example.homebudget.ui.common.dialogs.CalendarDatePickerDialog
-import com.example.homebudget.utils.money.AmountParser
+import com.example.homebudget.ui.dialogs.CalendarDatePickerDialog
 import com.example.homebudget.utils.money.MoneyFormatter
 import com.example.homebudget.viewmodel.savings.SavingsNotification
 import com.example.homebudget.viewmodel.savings.SavingsViewModel
@@ -71,7 +69,6 @@ fun SavingsDialogs(viewModel: SavingsViewModel) {
         var title by remember { mutableStateOf("") }
         var amount by remember { mutableStateOf("") }
         val selectedPeople = remember { mutableStateListOf<String>() }
-        var peopleDialogOpen by remember { mutableStateOf(false) }
         var endDate by remember { mutableStateOf<Long?>(null) }
         var datePickerOpen by remember { mutableStateOf(false) }
         // Obsługa klawisza TAB – desktopowy przepływ fokusu między polami
@@ -88,7 +85,7 @@ fun SavingsDialogs(viewModel: SavingsViewModel) {
             title = "Dodaj cel",
             confirmText = "Zapisz",
             onConfirm = {
-                val parsed = AmountParser.parse(amount)
+                val parsed = amount.replace(",", ".").toDoubleOrNull()
                 if (title.isNotBlank() && parsed != null && parsed > 0) {
                     viewModel.addGoal(title.trim(), parsed, selectedPeople.toList(), endDate)
                 }
@@ -155,10 +152,27 @@ fun SavingsDialogs(viewModel: SavingsViewModel) {
                 }
 
                 Spacer(Modifier.height(6.dp))
-                PeoplePickerButton(
-                    selectedPeople = selectedPeople,
-                    onOpen = { peopleDialogOpen = true }
-                )
+                Text("Wspólny cel z (opcjonalnie):")
+
+                state.availablePeople
+                    .filter { it != "Tylko ja" }
+                    .forEach { person ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = selectedPeople.contains(person),
+                                onCheckedChange = { checked ->
+                                    if (checked) {
+                                        if (selectedPeople.size < 3) {
+                                            selectedPeople.add(person)
+                                        }
+                                    } else {
+                                        selectedPeople.remove(person)
+                                    }
+                                }
+                            )
+                            Text(person)
+                        }
+                    }
                 Text(
                     text = "Jeśli nic nie wybierzesz → cel będzie tylko dla Ciebie." +
                             "Możesz dodać maksymalnie 3 osoby.",
@@ -166,15 +180,6 @@ fun SavingsDialogs(viewModel: SavingsViewModel) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
-
-        if (peopleDialogOpen) {
-            PeopleSelectionDialog(
-                people = state.availablePeople.filter { it != "Tylko ja" },
-                selectedPeople = selectedPeople,
-                onConfirm = { peopleDialogOpen = false },
-                onDismiss = { peopleDialogOpen = false }
-            )
         }
     }
 
@@ -184,7 +189,6 @@ fun SavingsDialogs(viewModel: SavingsViewModel) {
         var amount by remember(goal.id) { mutableStateOf(goal.targetAmount.toString()) }
         var endDate by remember(goal.id) { mutableStateOf(goal.endDate) }
         var datePickerOpen by remember { mutableStateOf(false) }
-        var peopleDialogOpen by remember(goal.id) { mutableStateOf(false) }
 
         val selectedPeople = remember(goal.id) {
             mutableStateListOf<String>().apply {
@@ -199,7 +203,7 @@ fun SavingsDialogs(viewModel: SavingsViewModel) {
             title = "Edytuj cel",
             confirmText = "Zapisz",
             onConfirm = {
-                val parsed = AmountParser.parse(amount)
+                val parsed = amount.replace(",", ".").toDoubleOrNull()
                 if (title.isNotBlank() && parsed != null && parsed > 0) {
                     viewModel.updateGoal(goal, title.trim(), parsed, selectedPeople.toList(), endDate)
                 }
@@ -264,10 +268,27 @@ fun SavingsDialogs(viewModel: SavingsViewModel) {
                 }
 
                 Spacer(Modifier.height(6.dp))
-                PeoplePickerButton(
-                    selectedPeople = selectedPeople,
-                    onOpen = { peopleDialogOpen = true }
-                )
+                Text("Wspólny cel z (opcjonalnie):")
+
+                state.availablePeople
+                    .filter { it != "Tylko ja" }
+                    .forEach { person ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = selectedPeople.contains(person),
+                                onCheckedChange = { checked ->
+                                    if (checked) {
+                                        if (selectedPeople.size < 3) {
+                                            selectedPeople.add(person)
+                                        }
+                                    } else {
+                                        selectedPeople.remove(person)
+                                    }
+                                }
+                            )
+                            Text(person)
+                        }
+                    }
                 Text(
                     text = "Jeśli nic nie wybierzesz → cel będzie tylko dla Ciebie." +
                             "Możesz dodać maksymalnie 3 osoby.",
@@ -275,15 +296,6 @@ fun SavingsDialogs(viewModel: SavingsViewModel) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
-
-        if (peopleDialogOpen) {
-            PeopleSelectionDialog(
-                people = state.availablePeople.filter { it != "Tylko ja" },
-                selectedPeople = selectedPeople,
-                onConfirm = { peopleDialogOpen = false },
-                onDismiss = { peopleDialogOpen = false }
-            )
         }
     }
 
@@ -307,7 +319,7 @@ fun SavingsDialogs(viewModel: SavingsViewModel) {
             title = "Dodaj wpłatę",
             confirmText = "Zapisz",
             onConfirm = {
-                val parsed = AmountParser.parse(amount)
+                val parsed = amount.replace(",", ".").toDoubleOrNull()
                 val person = peopleForGoal.getOrNull(selectedPersonIndex) ?: "Tylko ja"
                 if (parsed != null && parsed > 0) {
                     viewModel.addContribution(goal, parsed, person)
@@ -359,7 +371,7 @@ fun SavingsDialogs(viewModel: SavingsViewModel) {
             title = "Wypłać środki",
             confirmText = "Zapisz",
             onConfirm = {
-                val parsed = AmountParser.parse(amount)
+                val parsed = amount.replace(",", ".").toDoubleOrNull()
                 val person = peopleForGoal.getOrNull(selectedPersonIndex) ?: "Tylko ja"
 
                 error = when {
@@ -413,49 +425,38 @@ fun SavingsDialogs(viewModel: SavingsViewModel) {
                 if (state.contributions.isEmpty()) {
                     Text("Brak wpłat")
                 } else {
-                    ScrollableDialogContent(maxHeightDp = 420) {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // Podsumowanie
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.verticalScroll(rememberScrollState())
+                    ) {
+                        // Podsumowanie
+                        val grouped = state.contributions.groupBy { it.personName }
+                        grouped.forEach { (person, list) ->
+                            val sum = list.sumOf { it.amount }
                             Text(
-                                text = "Podsumowanie:",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
+                                text = "$person: ${if (sum >= 0) "+" else "-"}${MoneyFormatter.format(abs(sum))} zł",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold
                             )
-                            val grouped = state.contributions.groupBy { it.personName }
-                            grouped.forEach { (person, list) ->
-                                val sum = list.sumOf { it.amount }
-                                Text(
-                                    text = "$person: ${if (sum >= 0) "+" else "-"}${MoneyFormatter.format(abs(sum))} zł",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
+                        }
 
-                            HorizontalDivider()
+                        HorizontalDivider()
 
-                            // Szczegóły
+                        // Szczegóły
+                        state.contributions.forEach {
+                            val date = Instant.ofEpochMilli(it.timestamp)
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                            val sign = if (it.amount < 0) "-" else "+"
+                            val color =
+                                if (it.amount < 0) MaterialTheme.colorScheme.error
+                                else MaterialTheme.colorScheme.primary
+
                             Text(
-                                text = "Historia:",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
+                                text = "${it.personName}: $sign${MoneyFormatter.format(abs(it.amount))} zł • $date",
+                                color = color,
+                                style = MaterialTheme.typography.bodySmall
                             )
-                            state.contributions.forEach {
-                                val date = Instant.ofEpochMilli(it.timestamp)
-                                    .atZone(ZoneId.systemDefault())
-                                    .toLocalDate()
-                                val sign = if (it.amount < 0) "-" else "+"
-                                val color =
-                                    if (it.amount < 0) MaterialTheme.colorScheme.error
-                                    else MaterialTheme.colorScheme.primary
-
-                                Text(
-                                    text = "${it.personName}: $sign${MoneyFormatter.format(abs(it.amount))} zł • $date",
-                                    color = color,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
                         }
                     }
                 }
@@ -519,78 +520,4 @@ fun SavingsDialogs(viewModel: SavingsViewModel) {
             }
         }
     }
-}
-
-@Composable
-private fun PeoplePickerButton(
-    selectedPeople: List<String>,
-    onOpen: () -> Unit
-) {
-    OutlinedButton(
-        onClick = onOpen,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            if (selectedPeople.isEmpty()) {
-                "Wybierz osoby (opcjonalnie)"
-            } else {
-                "Wybrano: ${selectedPeople.joinToString(", ")}"
-            }
-        )
-    }
-}
-
-@Composable
-private fun PeopleSelectionDialog(
-    people: List<String>,
-    selectedPeople: MutableList<String>,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    var error by remember { mutableStateOf<String?>(null) }
-
-    BaseDialog(
-        title = "Wybierz osoby (maks. 3)",
-        content = {
-            if (people.isEmpty()) {
-                Text("Brak dodatkowych osób w ustawieniach.")
-            } else {
-                ScrollableDialogContent(maxHeightDp = 360) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        people.forEach { person ->
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Checkbox(
-                                    checked = selectedPeople.contains(person),
-                                    onCheckedChange = { checked ->
-                                        error = null
-                                        if (checked) {
-                                            if (selectedPeople.size < 3) {
-                                                selectedPeople.add(person)
-                                            } else {
-                                                error = "Maksymalnie 3 osoby!"
-                                            }
-                                        } else {
-                                            selectedPeople.remove(person)
-                                        }
-                                    }
-                                )
-                                Text(person)
-                            }
-                        }
-                        error?.let {
-                            Text(
-                                text = it,
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmText = "OK",
-        onConfirm = onConfirm,
-        onDismiss = onDismiss,
-        dismissText = "Anuluj"
-    )
 }

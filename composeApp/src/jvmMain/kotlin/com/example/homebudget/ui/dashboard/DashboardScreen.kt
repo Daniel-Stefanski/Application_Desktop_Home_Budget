@@ -338,6 +338,12 @@ private fun DashboardContent(
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Podsumowanie Twojego budżetu",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             IconButton(onClick = onPrevMonth) {
@@ -377,10 +383,8 @@ private fun DashboardContent(
         ) {
             // WYKRES
             // Kolor procentu zmienia się na czerwony po przekroczeniu budżetu
-            val hasNoData = state.categories.isEmpty() || state.totalSpent == 0.0
             val percentColor =
                 when {
-                    hasNoData -> MaterialTheme.colorScheme.onSurface
                     state.budget <= 0 -> MaterialTheme.colorScheme.onSurface
                     state.percentUsed > 100 -> MaterialTheme.colorScheme.error
                     else -> MaterialTheme.colorScheme.primary
@@ -391,64 +395,35 @@ private fun DashboardContent(
                     .aspectRatio(1f),
                 contentAlignment = Alignment.Center
             ) {
-                // Przybliżony promień wykresu dp
-                val radiusDp = maxWidth / 2
-                val holeRatio =
-                    when {
-                        radiusDp < 120.dp -> 0.38f
-                        radiusDp < 160.dp -> 0.34f
-                        else -> 0.28f
-                    }
-                // Realny promień miejsca na tekst
-                val innerRediusDp = radiusDp * holeRatio
+                // Dynamiczny rozmiar dla tekstu + procentu
+                val chartSize = maxWidth
                 val labelFontSize =
-                    when {
-                        radiusDp < 110.dp -> 10.sp
-                        radiusDp < 160.dp -> 12.sp
-                        else -> 14.sp
-                    }
+                    if (chartSize < 260.dp) 12.sp
+                    else 14.sp
                 val percentFontSize =
-                    when {
-                        innerRediusDp < 40.dp -> 12.sp
-                        innerRediusDp < 55.dp -> 16.sp
-                        innerRediusDp < 75.dp -> 20.sp
-                        innerRediusDp < 100.dp -> 24.sp
-                        else -> 30.sp
-                }
+                    if (chartSize < 260.dp) 22.sp
+                    else 30.sp
                 PieChart(
-                    data = if (hasNoData) listOf(1f) else state.categories.map { it.amount.toFloat() },
-                    labels = if (hasNoData) listOf("Brak wydatków") else state.categories.map { it.name },
-                    colors = if (hasNoData) listOf(NO_DATA_COLOR) else state.categoriesColors(),
+                    data = state.categories.map { it.amount.toFloat() },
+                    labels = state.categories.map { it.name },
+                    colors = state.categoriesColors(),
                     modifier = Modifier.fillMaxSize()
                 )
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (hasNoData) {
-                        Text(
-                            text = "Brak danych\nwprowadzonych",
-                            fontSize = labelFontSize,
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    } else if (radiusDp > 160.dp) {
-                        Text(
-                            text = "Łącznie wydano",
-                            fontSize = labelFontSize,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                    if (!hasNoData) {
-                        Text(
-                            text = String.format(Locale.forLanguageTag("pl-PL"),"%.1f%%", state.percentUsed),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontSize = percentFontSize,
-                            fontWeight = FontWeight.Bold,
-                            color = percentColor
-                        )
-                    }
+                    Text(
+                        text = "Łącznie wydano",
+                        fontSize = labelFontSize,
+                        style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = String.format(Locale.forLanguageTag("pl"),"%.1f%%", state.percentUsed),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontSize = percentFontSize,
+                        fontWeight = FontWeight.Bold,
+                        color = percentColor
+                    )
                 }
             }
 
@@ -512,7 +487,7 @@ private fun DashboardContent(
                         onCheckedChange = onToggleUsePreviousBudget,
                         enabled = state.canEditBudget
                     )
-                    Text("Powtarzaj co miesiąc")
+                    Text("Użyj budżetu z poprzedniego miesiąca")
                 }
                 Spacer(Modifier.height(8.dp))
                 Button(
@@ -540,7 +515,7 @@ private fun DashboardContent(
                 Spacer(Modifier.height(8.dp))
 
                 if (state.categories.isEmpty() || state.totalSpent == 0.0) {
-                    Text("Brak danych wprowadzonych")
+                    Text("Brak wydatków w tym miesiącu.")
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         state.categories.forEachIndexed { index, category ->
@@ -596,8 +571,8 @@ private fun PieChart(
         // Promień tekstu
         val textRadius = radius * (holeFraction + (1f - holeFraction) / 2f)
         // Dynamiczne skalowanie rozmiaru cionki dla nazwy i procentu
-        val categoryFontSize = (radius * 0.06f).coerceIn(10f, 18f)
-        val percentFontSize = (radius * 0.07f).coerceIn(12f, 22f)
+        val categoryFontSize = (radius * 0.065f).coerceIn(10f, 18f)
+        val percentFontSize = (radius * 0.075f).coerceIn(12f, 22f)
         // Rysowanie segmentów
         data.forEachIndexed { index, value ->
             val sweep = value / total * 360f
@@ -678,7 +653,7 @@ private fun PieChart(
     }
 }
 private fun DashboardUiState.categoriesColors(): List<Color> {
-    if (categories.isEmpty()) return listOf(NO_DATA_COLOR)
+    if (categories.isEmpty()) return listOf(Color(0xFFBDBDBD))
     return categories.map { category ->
         val hex = categoryColors[category.name] ?: "#999999"
         colorFromHex(hex)
@@ -693,4 +668,3 @@ private fun colorFromHex(hex: String): Color {
         else -> Color(0xFF999999.toInt())
     }
 }
-private val NO_DATA_COLOR = Color(0xFF8FEAFF)

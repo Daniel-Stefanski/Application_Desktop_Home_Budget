@@ -51,7 +51,8 @@ class DashboardViewModel : ViewModel() {
     // Aktualizacja wartości budżetu wpisywanej przez użytkownika
     fun onBudgetChanged(value: String) {
         _uiState.value = _uiState.value.copy(
-            budgetInput = value
+            budgetInput = value,
+            usePreviousBudget = false // ręczna zmiana wyłącza checkbox
         )
     }
     // Zapis nowego budżetu miesięcznego do bazy danych
@@ -185,7 +186,7 @@ class DashboardViewModel : ViewModel() {
                 val defaultBudget = getDefaultBudget(user.id, year, month)
                 val budget = when {
                     budgetEntity != null -> budgetEntity.budget
-                    defaultBudget != null -> defaultBudget.budget
+                    isCurrentMonth && defaultBudget != null -> defaultBudget.budget
                     else -> 0.0
                 }
                 val useDefault = when {
@@ -197,6 +198,7 @@ class DashboardViewModel : ViewModel() {
                 val percentUsed =
                     if (budget > 0.0) (totalSpent / budget * 100.0)
                     else 0.0
+
                 val todayDate = LocalDate.now().toString()
                 val lastWarningDate = Prefs.getLastBudgetWarningDate()
                 val shouldShowWarning = isCurrentMonth && budget > 0.0 && totalSpent > budget && lastWarningDate != todayDate
@@ -231,10 +233,18 @@ class DashboardViewModel : ViewModel() {
         year: Int,
         month: Int
     ): MonthlyBudget? {
-        val previousBudget = monthlyBudgetDao.getAllBudgetsForUser(userId)
-            .filter { it.year < year || (it.year == year && it.month < month) }
-            .maxWithOrNull(compareBy<MonthlyBudget> { it.year }.thenBy { it.month })
-        return previousBudget?.takeIf { it.isDefault }
+        var y = year
+        var m = month - 1
+        while (true) {
+            if (m < 1) {
+                m = 12
+                y -= 1
+            }
+            val budget = monthlyBudgetDao.getBudgetForMonth(userId, y, m)
+                ?: return null
+            if (budget.isDefault) return budget
+            m -= 1
+        }
     }
     /**
      * Ukrywa dialog ostrzegawczy

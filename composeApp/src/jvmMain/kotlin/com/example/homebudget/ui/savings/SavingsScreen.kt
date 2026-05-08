@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -67,12 +66,7 @@ fun SavingsScreen() {
                     } else if (state.goals.isEmpty()) {
                         EmptyState(text = "📝 Brak celów oszczędnościowych.")
                     } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
+                        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             items(state.goals) { goal ->
                                 SavingsGoalCard(
                                     goal = goal,

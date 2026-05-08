@@ -51,7 +51,7 @@ import com.example.homebudget.ui.common.feedback.LoadingState
 import com.example.homebudget.ui.common.fields.ErrorText
 import com.example.homebudget.ui.common.fields.FormTextField
 import com.example.homebudget.ui.common.fields.NumberField
-import com.example.homebudget.ui.common.dialogs.CalendarDatePickerDialog
+import com.example.homebudget.ui.dialogs.CalendarDatePickerDialog
 import com.example.homebudget.viewmodel.addexpense.AddExpenseUiState
 import com.example.homebudget.viewmodel.addexpense.AddExpenseViewModel
 import java.time.LocalDate
@@ -246,12 +246,9 @@ private fun AddExpenseContent(
             value = state.note,
             onValueChange = onNoteChange,
             label = "📝 Notatka (opcjonalnie)",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(110.dp),
+            modifier = Modifier.fillMaxWidth(),
             focusRequester = noteFocus,
             singleLine = false,
-            minLines = 4,
             maxLength = 300
         )
         Spacer(Modifier.height(16.dp))

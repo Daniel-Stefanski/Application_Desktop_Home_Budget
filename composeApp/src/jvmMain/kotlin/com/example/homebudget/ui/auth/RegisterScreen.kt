@@ -103,13 +103,13 @@ fun RegisterScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Nagłówek ekranu
-                Text("Zarejestruj się", style = MaterialTheme.typography.headlineMedium)
+                Text("Rejestracja", style = MaterialTheme.typography.headlineMedium)
                 Spacer(Modifier.height(20.dp))
                 // Pole opcjonalnej nazwy użytkownika
                 FormTextField(
                     value = uiState.name,
                     onValueChange = viewModel::onNameChanged,
-                    label = "Imię/Nick (opcjonalnie)",
+                    label = "Imię/Nick (Opcjonalnie)",
                     modifier = Modifier.fillMaxWidth(),
                     focusRequester = nameFocus,
                     maxLength = 20
@@ -237,7 +237,7 @@ fun RegisterScreen(
                             } else false
                         }
                 ) {
-                    Text("Zarejestruj się")
+                    Text("Utwórz konto")
                 }
                 // Powrót do ekranu logowania
                 TextButton(onClick = onBackToLogin) {

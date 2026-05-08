@@ -1,11 +1,9 @@
 package com.example.homebudget.ui.billsplanner
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -14,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -23,10 +20,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.homebudget.data.entity.Expense
 import com.example.homebudget.utils.money.MoneyFormatter
 import java.text.SimpleDateFormat
@@ -54,7 +49,7 @@ fun BillsPlannerCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val isPaid = expense.status.trim().lowercase().startsWith("op")
+    val isPaid = expense.status == "opłacony"
     val today = LocalDate.now()
     val billDate = Instant.ofEpochMilli(expense.date)
         .atZone(ZoneId.systemDefault())
@@ -62,11 +57,6 @@ fun BillsPlannerCard(
     val daysLeft = ChronoUnit.DAYS.between(today, billDate)
 
     val statusColor = if (isPaid) Color(0xFF4CAF50) else Color(0xFFF44336)
-    val titleColor = if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) {
-        Color(0xFFD0B6F0)
-    } else {
-        Color(0xFF7F61E0)
-    }
     val dateColor = when {
         isPaid -> MaterialTheme.colorScheme.onSurface
         daysLeft < 0 -> MaterialTheme.colorScheme.error
@@ -75,20 +65,10 @@ fun BillsPlannerCard(
         else -> MaterialTheme.colorScheme.onSurface
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(13.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        border = BorderStroke(1.dp, Color(0xFFD0B6F0)),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
+    Card {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min)
+            modifier = Modifier.fillMaxWidth()
         ) {
             // pasek statusu
             Box(
@@ -100,13 +80,12 @@ fun BillsPlannerCard(
 
             Column(
                 modifier = Modifier
-                    .padding(12.dp)
+                    .padding(16.dp)
                     .weight(1f)
             ) {
                 // Opis
                 Text(
                     text = "Opis: ${expense.description ?: "-"}",
-                    color = titleColor,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -141,15 +120,8 @@ fun BillsPlannerCard(
                 }
                 // Jaki cykl
                 Text(
-                    text = "Powtarza się: ${formatRepeatInterval(expense.repeatInterval)}",
+                    text = "Cykl: ${formatRepeatInterval(expense.repeatInterval)}",
                     style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "Status: ${if (isPaid) "Opłacony" else "Nieopłacony"}",
-                    color = statusColor,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
                 )
                 Spacer(Modifier.height(8.dp))
 
@@ -180,8 +152,6 @@ private fun formatRepeatInterval(months: Int): String =
         1 -> "co miesiąc"
         2 -> "co 2 miesiące"
         3 -> "co 3 miesiące"
-        6 -> "co 6 miesięcy"
-        12 -> "co 12 miesięcy"
         else -> "co $months miesięcy"
     }
 // Mała etykieta informująca o terminie płatności
