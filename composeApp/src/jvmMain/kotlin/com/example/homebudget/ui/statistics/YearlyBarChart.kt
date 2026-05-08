@@ -125,7 +125,8 @@ fun YearlyBarChart(
             )
             val label = (i * step).toInt().toString()
             val measured = textMeasurer.measure(AnnotatedString(label), style = labelStyle)
-            val textY = max(topPadding, y - measured.size.height / 2f)
+            val textY = (y - measured.size.height / 2f)
+                .coerceIn(0f, size.height - measured.size.height.toFloat())
             drawText(
                 textMeasurer = textMeasurer,
                 text = AnnotatedString(label),

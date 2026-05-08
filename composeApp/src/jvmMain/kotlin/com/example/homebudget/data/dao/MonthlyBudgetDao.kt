@@ -13,7 +13,10 @@ interface MonthlyBudgetDao {
 
     // Wstaw nowy budżet lub zastąp istniejący (dla danego miesiąca)
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertBudget(monthlyBudget: MonthlyBudget)
+    suspend fun insertBudget(monthlyBudget: MonthlyBudget): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(items: List<MonthlyBudget>)
 
     // Aktualizacja istniejącego budżetu
     @Update
@@ -30,4 +33,10 @@ interface MonthlyBudgetDao {
 
     @Query("DELETE FROM monthly_budgets WHERE userId = :userId")
     suspend fun deleteAllForUser(userId: Int)
+
+    @Query("DELETE FROM monthly_budgets WHERE userId = :userId")
+    suspend fun deleteAll(userId: Int)
+
+    @Query("SELECT * FROM monthly_budgets WHERE userId = :userId AND year = :year AND month = :month LIMIT 1")
+    suspend fun getByYearMonth(userId: Int, year: Int, month: Int): MonthlyBudget?
 }

@@ -4,6 +4,7 @@ package com.example.homebudget.ui.history
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,9 +22,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -44,23 +50,25 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.homebudget.data.entity.Expense
+import com.example.homebudget.ui.common.dialogs.CalendarDatePickerDialog
 import com.example.homebudget.ui.common.dialogs.FormDialog
 import com.example.homebudget.ui.common.dropdowns.FormDropdown
 import com.example.homebudget.ui.common.dropdowns.SortDropdown
 import com.example.homebudget.ui.common.feedback.EmptyState
 import com.example.homebudget.ui.common.feedback.ErrorState
 import com.example.homebudget.ui.common.feedback.LoadingState
-import com.example.homebudget.ui.common.fields.FormTextField
 import com.example.homebudget.ui.common.fields.NumberField
 import com.example.homebudget.utils.money.MoneyFormatter
 import com.example.homebudget.viewmodel.history.HistoryListItem
 import com.example.homebudget.viewmodel.history.HistoryUiState
 import com.example.homebudget.viewmodel.history.HistoryViewModel
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -117,6 +125,16 @@ fun HistoryScreen() {
             }
         }
     }
+
+}
+
+private fun parseFilterDate(
+    text: String,
+    formatter: DateTimeFormatter
+): LocalDate {
+    return runCatching {
+        LocalDate.parse(text, formatter)
+    }.getOrDefault(LocalDate.now())
 }
 
 /**
@@ -170,13 +188,25 @@ private fun HistoryContent(
         Spacer(Modifier.height(16.dp))
 
         // ===== WYSZUKIWANIE =====
-        FormTextField(
+        OutlinedTextField(
             value = state.searchQuery,
-            onValueChange = onSearchChange,
-            label = "Szukaj wydatku po opisie lub notatce...",
-            modifier = Modifier.fillMaxWidth(),
-            focusRequester = searchFocus,
-            maxLength = 100,
+            onValueChange = { onSearchChange(it.take(100)) },
+            label = { Text("Szukaj wydatku po opisie lub notatce...") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = "Szukaj"
+                )
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(searchFocus)
+                .onPreviewKeyEvent {
+                    if (it.key == Key.Tab && it.type == KeyEventType.KeyDown) {
+                        focusManager.moveFocus(FocusDirection.Next)
+                        true
+                    } else false
+                },
         )
 
         Spacer(Modifier.height(16.dp))
@@ -419,6 +449,11 @@ private fun AdvancedFilterDialog(
     var categoryIndex by remember(initialCategoryIndex) { mutableStateOf(initialCategoryIndex) }
     var paymentIndex by remember(initialPaymentIndex) { mutableStateOf(initialPaymentIndex) }
     var onlyRecurring by remember(initialOnlyRecurring) { mutableStateOf(initialOnlyRecurring) }
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var showEndDatePicker by remember { mutableStateOf(false) }
+    val filterDateFormatter = remember {
+        DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.forLanguageTag("pl"))
+    }
 
     FormDialog(
         title = "Filtr zaawansowany",
@@ -451,15 +486,41 @@ private fun AdvancedFilterDialog(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = startDate,
-                    onValueChange = { startDate = it },
-                    modifier = Modifier.weight(1f),
-                    label = { Text("Od") }
+                    onValueChange = {},
+                    readOnly = true,
+                    modifier = Modifier
+                        .weight(1f)
+                        .pointerInput(Unit) {
+                            detectTapGestures { showStartDatePicker = true }
+                        },
+                    label = { Text("Od") },
+                    trailingIcon = {
+                        IconButton(onClick = { showStartDatePicker = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.CalendarToday,
+                                contentDescription = "Wybierz datę od"
+                            )
+                        }
+                    }
                 )
                 OutlinedTextField(
                     value = endDate,
-                    onValueChange = { endDate = it },
-                    modifier = Modifier.weight(1f),
-                    label = { Text("Do") }
+                    onValueChange = {},
+                    readOnly = true,
+                    modifier = Modifier
+                        .weight(1f)
+                        .pointerInput(Unit) {
+                            detectTapGestures { showEndDatePicker = true }
+                        },
+                    label = { Text("Do") },
+                    trailingIcon = {
+                        IconButton(onClick = { showEndDatePicker = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.CalendarToday,
+                                contentDescription = "Wybierz datę do"
+                            )
+                        }
+                    }
                 )
             }
             Spacer(Modifier.height(8.dp))
@@ -518,5 +579,27 @@ private fun AdvancedFilterDialog(
                 Text("Tylko powtarzalne wydatki")
             }
         }
+    }
+
+    if (showStartDatePicker) {
+        CalendarDatePickerDialog(
+            initialDate = parseFilterDate(startDate, filterDateFormatter),
+            onConfirm = {
+                startDate = filterDateFormatter.format(it)
+                showStartDatePicker = false
+            },
+            onDismiss = { showStartDatePicker = false }
+        )
+    }
+
+    if (showEndDatePicker) {
+        CalendarDatePickerDialog(
+            initialDate = parseFilterDate(endDate, filterDateFormatter),
+            onConfirm = {
+                endDate = filterDateFormatter.format(it)
+                showEndDatePicker = false
+            },
+            onDismiss = { showEndDatePicker = false }
+        )
     }
 }

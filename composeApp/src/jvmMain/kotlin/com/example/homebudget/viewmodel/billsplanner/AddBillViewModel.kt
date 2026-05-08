@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.homebudget.data.database.AppDatabase
 import com.example.homebudget.data.entity.Expense
+import com.example.homebudget.data.sync.RemoteSync
 import com.example.homebudget.utils.date.DateConverters
 import com.example.homebudget.utils.money.AmountParser
 import com.example.homebudget.utils.settings.Prefs
@@ -77,6 +78,7 @@ class AddBillViewModel(
 
             val dateMillis = DateConverters.localDateToStartOfDayMillis(state.date)
             if (expenseId != null) {
+                val existingExpense = expenseDao.getExpenseById(expenseId)
                 // Edycja rachunku
                 expenseDao.updateExpenseFull(
                     expenseId = expenseId,
@@ -90,6 +92,18 @@ class AddBillViewModel(
                     expenseId,
                     if (state.markPaid) "opłacony" else "nieopłacony"
                 )
+                existingExpense?.let {
+                    RemoteSync.syncExpenseUpdate(
+                        it.copy(
+                            description = state.description,
+                            amount = AmountParser.parse(state.amount) ?: return@launch,
+                            note = state.note.ifBlank { null },
+                            date = dateMillis,
+                            repeatInterval = listOf(1, 2, 3, 6, 12)[state.repeatIntervalIndex],
+                            status = if (state.markPaid) "opłacony" else "nieopłacony"
+                        )
+                    )
+                }
             } else {
                 // Dodaj nowy rachunek
                 val expense = Expense(
@@ -105,7 +119,8 @@ class AddBillViewModel(
                     repeatInterval = listOf(1, 2, 3, 6, 12)[state.repeatIntervalIndex],
                     status = if (state.markPaid) "opłacony" else "nieopłacony"
                 )
-                expenseDao.insertExpense(expense)
+                val localId = expenseDao.insertExpense(expense).toInt()
+                RemoteSync.syncExpenseInsert(localId, expense)
             }
 
             _uiState.value = state.copy(saved = true)
@@ -132,6 +147,7 @@ class AddBillViewModel(
 
     fun updateDate(date: LocalDate) {
         _uiState.value = _uiState.value.copy(date = date)
+        validate()
     }
 
     fun updateMarkPaid(value: Boolean) {
@@ -145,10 +161,12 @@ class AddBillViewModel(
     private fun validate() {
         val descValid = _uiState.value.description.isNotBlank()
         val amountValid = AmountParser.isValid(_uiState.value.amount)
+        val dateValid = !_uiState.value.date.isBefore(LocalDate.now())
         _uiState.value = _uiState.value.copy(
             descriptionError = if (!descValid) "Wpisz opis" else null,
             amountError = if (!amountValid) "Podaj prawidłową kwotę" else null,
-            isValid = descValid && amountValid
+            dateError = if (!dateValid) "Termin płatności nie może być w przeszłości" else null,
+            isValid = descValid && amountValid && dateValid
         )
     }
 }

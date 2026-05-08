@@ -3,8 +3,9 @@ package com.example.homebudget.data.entity
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
-//Settings.kt – model danych ustawień użytkownika.
+@Serializable
 @Entity(
     tableName = "settings",
     foreignKeys = [ForeignKey(
@@ -16,13 +17,13 @@ import androidx.room.PrimaryKey
 )
 data class Settings(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val userId: Int, // powiązanie z użytkownikiem
-    val categories: String, // zapisane jako JSON np. ["Jedzenie":"#ff5722","Transport"]
+    val userId: Int,
+    val categories: String,
     val currency: String,
-    val period: String, // np. "miesięczny"
+    val period: String,
     val savingsGoal: Double,
-    val categoryColors: String = "{}", //zapisz jako JSON np. ["Jedzenie":"#ff5722"]
-    val peopleList: String = "[]", //zpisujemy liste osób fikcyjnych
-    val defaultCategory: String? = null, // domyślna kategoria
-    val defaultPaymentMethod: String? = null // domyślna metoda płatności
+    val categoryColors: String = "{}",
+    val peopleList: String = "[]",
+    val defaultCategory: String? = null,
+    val defaultPaymentMethod: String? = null
 )

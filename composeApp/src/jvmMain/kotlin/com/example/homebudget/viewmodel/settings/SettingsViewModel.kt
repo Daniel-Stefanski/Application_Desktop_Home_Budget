@@ -4,7 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.homebudget.data.database.AppDatabase
 import com.example.homebudget.data.entity.Settings
+import com.example.homebudget.data.remote.repository.ExpenseRemoteRepository
+import com.example.homebudget.data.remote.repository.MonthlyBudgetRemoteRepository
+import com.example.homebudget.data.remote.repository.SavingsRemoteRepository
+import com.example.homebudget.data.remote.repository.SettingsRemoteRepository
+import com.example.homebudget.data.remote.repository.SupabaseAccountRepository
+import com.example.homebudget.data.sync.RemoteSync
 import com.example.homebudget.utils.settings.Prefs
+import com.example.homebudget.utils.settings.CategoryColorPalette
 import com.example.homebudget.utils.settings.SettingsHelper
 import com.example.homebudget.utils.validation.EmailValidator
 import com.example.homebudget.utils.validation.PasswordValidator
@@ -170,6 +177,15 @@ class SettingsViewModel : ViewModel() {
     fun deleteAccount(onDone: () -> Unit) {
         viewModelScope.launch {
             val userId = Prefs.getLastLoggedUser() ?: return@launch
+            val supabaseUid = Prefs.getSupabaseUid()
+            if (!supabaseUid.isNullOrBlank()) {
+                SupabaseAccountRepository.deleteAccount(supabaseUid)
+            }
+            db.expenseDao().deleteAll(userId)
+            db.monthlyBudgetDao().deleteAllForUser(userId)
+            db.contributionDao().deleteAllForUser(userId)
+            db.savingsGoalDao().deleteAll(userId)
+            db.pendingSyncDao().getAll().forEach { db.pendingSyncDao().delete(it) }
             userDao.deleteUser(userId)
             Prefs.resetAll()
             onDone()
@@ -194,6 +210,9 @@ class SettingsViewModel : ViewModel() {
             // usuń dane użytkownika
             db.expenseDao().deleteAll(userId)
             db.monthlyBudgetDao().deleteAllForUser(userId)
+            db.contributionDao().deleteAllForUser(userId)
+            db.savingsGoalDao().deleteAll(userId)
+            db.pendingSyncDao().getAll().forEach { db.pendingSyncDao().delete(it) }
 
             // usuń dane użytkownika
             val settings = settingsDao.getSettingsForUser(userId) ?: return@launch
@@ -207,13 +226,28 @@ class SettingsViewModel : ViewModel() {
                 "Inne" to "#9E9E9E"
             )
 
-            settingsDao.update(
-                settings.copy(
-                    categories = Json.encodeToString(defaultCategories),
-                    categoryColors = Json.encodeToString(defaultColors),
-                    peopleList = "[]"
-                )
+            val updatedSettings = settings.copy(
+                categories = Json.encodeToString(defaultCategories),
+                currency = "PLN",
+                period = "Miesięczny",
+                savingsGoal = 0.0,
+                categoryColors = Json.encodeToString(defaultColors),
+                peopleList = "[]",
+                defaultCategory = "Brak",
+                defaultPaymentMethod = "Brak"
             )
+
+            val supabaseUid = Prefs.getSupabaseUid()
+            if (!supabaseUid.isNullOrBlank()) {
+                ExpenseRemoteRepository.deleteAllForUser(supabaseUid)
+                SavingsRemoteRepository.deleteAllForUser(supabaseUid)
+                MonthlyBudgetRemoteRepository.deleteAllForUser(supabaseUid)
+                SettingsRemoteRepository.resetSettings(supabaseUid, updatedSettings)
+            } else {
+                RemoteSync.syncSettings(updatedSettings)
+            }
+
+            settingsDao.insertSettings(updatedSettings)
 
             onDone()
             loadSettings()
@@ -237,7 +271,25 @@ class SettingsViewModel : ViewModel() {
         val exists = _uiState.value.categories.any { it.equals(normalized, ignoreCase = true) }
         if (exists) return
         val updated = _uiState.value.categories + normalized
-        saveSettings(s.copy(categories = Json.encodeToString(updated)))
+        val updatedColors = _uiState.value.categoryColors.toMutableMap()
+        updatedColors[normalized] = nextCategoryColorHex()
+        saveSettings(
+            s.copy(
+                categories = Json.encodeToString(updated),
+                categoryColors = Json.encodeToString(updatedColors)
+            )
+        )
+    }
+
+    fun nextCategoryColorHex(): String {
+        val usedColors = _uiState.value.categoryColors.values
+            .map { it.uppercase() }
+            .toSet()
+
+        return CategoryColorPalette.COLORS.firstOrNull { it.uppercase() !in usedColors }
+            ?: CategoryColorPalette.COLORS[
+                _uiState.value.categories.size % CategoryColorPalette.COLORS.size
+            ]
     }
 
     fun removeCategory(name: String) {
@@ -279,6 +331,7 @@ class SettingsViewModel : ViewModel() {
     private fun saveSettings(updated: Settings) {
         viewModelScope.launch {
             settingsDao.update(updated)
+            RemoteSync.syncSettings(updated)
             currentSettings = updated
             loadSettings()
         }

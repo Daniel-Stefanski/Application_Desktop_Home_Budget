@@ -25,6 +25,7 @@ data class AddBillUiState(
 
     val descriptionError: String? = null,
     val amountError: String? = null,
+    val dateError: String? = null,
     val isValid: Boolean = false,
 
     val date: LocalDate = LocalDate.now(),

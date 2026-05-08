@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -17,13 +20,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.homebudget.data.sync.SupabaseToastBus
+import com.example.homebudget.data.sync.SupabaseToastEvent
+import com.example.homebudget.data.sync.SupabaseToastType
 import com.example.homebudget.ui.billsplanner.AddBillScreen
 import com.example.homebudget.ui.dashboard.DashboardScreen
 import com.example.homebudget.ui.auth.LoginScreen
 import com.example.homebudget.ui.auth.RegisterScreen
 import com.example.homebudget.ui.auth.ResetPasswordScreen
+import com.example.homebudget.ui.auth.SetNewPasswordScreen
 import com.example.homebudget.ui.addexpense.AddExpenseScreen
 import com.example.homebudget.ui.billsplanner.BillsPlannerScreen
 import com.example.homebudget.ui.history.HistoryScreen
@@ -35,6 +44,7 @@ import com.example.homebudget.ui.theme.ThemeMode
 import com.example.homebudget.utils.settings.Prefs
 import com.example.homebudget.viewmodel.auth.LoginViewModel
 import com.example.homebudget.viewmodel.theme.ThemeViewModel
+import kotlinx.coroutines.delay
 
 /**
  * App
@@ -119,7 +129,7 @@ fun App() {
                     }
 
                     "login" -> LoginScreen(
-                        viewModel = LoginViewModel(),
+                        viewModel = viewModel<LoginViewModel>(),
                         onLoginSuccess = { screen = "dashboard" },
                         onGoToRegister = { screen = "register" },
                         onGoToResetPassword = { screen = "resetpassword" }
@@ -133,7 +143,13 @@ fun App() {
 
                     "resetpassword" -> ResetPasswordScreen(
                         onBackToLogin = { screen = "login" },
-                        onSuccessReset = { screen = "login" }
+                        onSuccessReset = { screen = "login" },
+                        onGoToSetNewPassword = { screen = "setnewpassword" }
+                    )
+
+                    "setnewpassword" -> SetNewPasswordScreen(
+                        initialToken = null,
+                        onBackToLogin = { screen = "login" }
                     )
 
                     "dashboard" -> {
@@ -193,7 +209,49 @@ fun App() {
                         }
                     )
                 }
+                SupabaseToastHost(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 24.dp)
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun SupabaseToastHost(modifier: Modifier = Modifier) {
+    var toast by remember { mutableStateOf<SupabaseToastEvent?>(null) }
+
+    LaunchedEffect(Unit) {
+        SupabaseToastBus.events.collect { event ->
+            toast = event
+            delay(3_000L)
+            if (toast == event) {
+                toast = null
+            }
+        }
+    }
+
+    toast?.let { event ->
+        val background = when (event.type) {
+            SupabaseToastType.SUCCESS -> Color(0xFF2E7D32)
+            SupabaseToastType.WARNING -> Color(0xFF6D4C41)
+        }
+
+        Surface(
+            modifier = modifier.widthIn(min = 280.dp, max = 520.dp),
+            color = background,
+            contentColor = Color.White,
+            tonalElevation = 6.dp,
+            shadowElevation = 6.dp,
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Text(
+                text = event.message,
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.homebudget.data.database.AppDatabase
 import com.example.homebudget.data.entity.Contribution
 import com.example.homebudget.data.entity.SavingsGoal
+import com.example.homebudget.data.sync.RemoteSync
 import com.example.homebudget.utils.date.DateConverters
 import com.example.homebudget.utils.settings.Prefs
 import com.example.homebudget.utils.settings.SettingsHelper
@@ -105,15 +106,17 @@ class SavingsViewModel : ViewModel() {
 
     fun addContribution(goal: SavingsGoal, amount: Double, person: String) {
         viewModelScope.launch {
-            contributionDao.insert(
-                Contribution(
-                    userId = goal.userId,
-                    goalId = goal.id,
-                    personName = person,
-                    amount = amount
-                )
+            val contribution = Contribution(
+                userId = goal.userId,
+                goalId = goal.id,
+                personName = person,
+                amount = amount
             )
-            goalDao.update(goal.copy(savedAmount = goal.savedAmount + amount))
+            val localContributionId = contributionDao.insert(contribution).toInt()
+            val updatedGoal = goal.copy(savedAmount = goal.savedAmount + amount)
+            goalDao.update(updatedGoal)
+            RemoteSync.syncContributionInsert(localContributionId, contribution, goal)
+            RemoteSync.syncGoalUpdate(updatedGoal)
             dismissDialogs()
             loadGoals()
         }
@@ -122,15 +125,15 @@ class SavingsViewModel : ViewModel() {
     fun addGoal(title: String, targetAmount: Double, sharedWith: List<String>, endDate: Long?) {
         viewModelScope.launch {
             val uid = Prefs.getLastLoggedUser() ?: return@launch
-            goalDao.insert(
-                SavingsGoal(
-                    userId = uid,
-                    title = title,
-                    targetAmount = targetAmount,
-                    endDate = endDate,
-                    sharedWith = if (sharedWith.isEmpty()) null else sharedWith.joinToString(", ")
-                )
+            val goal = SavingsGoal(
+                userId = uid,
+                title = title,
+                targetAmount = targetAmount,
+                endDate = endDate,
+                sharedWith = if (sharedWith.isEmpty()) null else sharedWith.joinToString(", ")
             )
+            val localGoalId = goalDao.insert(goal).toInt()
+            RemoteSync.syncGoalInsert(localGoalId, goal)
             dismissDialogs()
             loadGoals()
         }
@@ -138,15 +141,17 @@ class SavingsViewModel : ViewModel() {
 
     fun withdraw(goal: SavingsGoal, amount: Double, person: String) {
         viewModelScope.launch {
-            contributionDao.insert(
-                Contribution(
-                    userId = goal.userId,
-                    goalId = goal.id,
-                    personName = person,
-                    amount = -amount
-                )
+            val contribution = Contribution(
+                userId = goal.userId,
+                goalId = goal.id,
+                personName = person,
+                amount = -amount
             )
-            goalDao.update(goal.copy(savedAmount = goal.savedAmount - amount))
+            val localContributionId = contributionDao.insert(contribution).toInt()
+            val updatedGoal = goal.copy(savedAmount = goal.savedAmount - amount)
+            goalDao.update(updatedGoal)
+            RemoteSync.syncContributionInsert(localContributionId, contribution, goal)
+            RemoteSync.syncGoalUpdate(updatedGoal)
             dismissDialogs()
             loadGoals()
         }
@@ -154,14 +159,14 @@ class SavingsViewModel : ViewModel() {
 
     fun updateGoal(goal: SavingsGoal, title: String, targetAmount: Double, sharedWith: List<String>, endDate: Long?) {
         viewModelScope.launch {
-            goalDao.update(
-                goal.copy(
-                    title = title,
-                    targetAmount = targetAmount,
-                    endDate = endDate,
-                    sharedWith = if (sharedWith.isEmpty()) null else sharedWith.joinToString(", ")
-                )
+            val updatedGoal = goal.copy(
+                title = title,
+                targetAmount = targetAmount,
+                endDate = endDate,
+                sharedWith = if (sharedWith.isEmpty()) null else sharedWith.joinToString(", ")
             )
+            goalDao.update(updatedGoal)
+            RemoteSync.syncGoalUpdate(updatedGoal)
             dismissDialogs()
             loadGoals()
         }
@@ -171,6 +176,7 @@ class SavingsViewModel : ViewModel() {
         viewModelScope.launch {
             contributionDao.deleteByGoal(goal.id)
             goalDao.delete(goal)
+            RemoteSync.syncGoalDelete(goal)
             loadGoals()
         }
     }
@@ -199,9 +205,9 @@ class SavingsViewModel : ViewModel() {
                     LocalDate.now(),
                     endDate
                 )
-                val thresholds = listOf(14L, 7L, 2L, 1L, 0L)
+                val thresholds = listOf(30L, 14L, 7L, 2L, 1L)
                 if (daysLeft in thresholds) {
-                    val key = "${goal.id}_$daysLeft"
+                    val key = "${goal.id}_${goal.endDate}_${daysLeft}_${LocalDate.now()}"
                     if (!Prefs.wasDeadlineWarningShown(key)) {
                         Prefs.markDeadlineWarningShown(key)
                         _uiState.value = _uiState.value.copy(

@@ -71,6 +71,9 @@ fun BillsPlannerScreen(
                     2L -> "⏰ Termin za 2 dni"
                     1L -> "⚠️ Termin jutro!"
                     0L -> "❗ Termin dziś!"
+                    -1L -> "⚠️ Termin minął wczoraj"
+                    -2L -> "⚠️ Termin minął 2 dni temu"
+                    -3L -> "⚠️ Termin minął 3 dni temu"
                     else -> "⚠️ Termin minął"
                 }
                 val message = when (days) {
@@ -78,7 +81,10 @@ fun BillsPlannerScreen(
                     2L -> "Do terminu płatności „${notification.title}” pozostały 2 dni."
                     1L -> "Jutro mija termin płatności „${notification.title}”."
                     0L -> "Dziś mija termin płatności „${notification.title}”."
-                    else -> "Zbliża się termin płatności „${notification.title}”."
+                    -1L -> "Termin płatności „${notification.title}” minął wczoraj."
+                    -2L -> "Termin płatności „${notification.title}” minął 2 dni temu."
+                    -3L -> "Termin płatności „${notification.title}” minął 3 dni temu."
+                    else -> "Termin płatności „${notification.title}” już minął."
                 }
 
                 ConfirmDialog(
@@ -160,7 +166,12 @@ fun BillsPlannerScreen(
                     } else if (state.bills.isEmpty()) {
                         EmptyState(text = "📝 Brak zaplanowanych rachunków.")
                     } else {
-                        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                             items(state.bills) { bill ->
                                 BillsPlannerCard(
                                     expense = bill,

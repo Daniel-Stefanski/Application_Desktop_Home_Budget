@@ -304,7 +304,8 @@ fun SettingsScreen(
 
                             AddItemRow(
                                 placeholder = "Nowa kategoria",
-                                onAdd = viewModel::addCategory
+                                onAdd = viewModel::addCategory,
+                                previewColorHex = viewModel.nextCategoryColorHex()
                             )
                         }
                     }
@@ -374,7 +375,7 @@ fun SettingsScreen(
                             }
 
                             ThemeRow(
-                                label = "⚙️ Systemowy",
+                                label = "⚙️ Automatyczny (zgodny z systemem)",
                                 selected = currentTheme == ThemeMode.SYSTEM
                             ) {
                                 themeViewModel.setTheme(ThemeMode.SYSTEM)
@@ -551,11 +552,28 @@ fun ThemeRow(
 @Composable
 private fun AddItemRow(
     placeholder: String,
-    onAdd: (String) -> Unit
+    onAdd: (String) -> Unit,
+    previewColorHex: String? = null
 ) {
     var text by remember { mutableStateOf("") }
 
-    Row {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (previewColorHex != null) {
+            Box(
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .size(width = 36.dp, height = 20.dp)
+                    .background(
+                        colorFromHex(previewColorHex),
+                        shape = MaterialTheme.shapes.small
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline,
+                        shape = MaterialTheme.shapes.small
+                    )
+            )
+        }
         OutlinedTextField(
             value = text,
             onValueChange = {
@@ -628,7 +646,7 @@ fun ColorPickerDialog(
                                     .border(
                                         width = if (isSelected) 3.dp else 1.dp,
                                         color = if (isSelected)
-                                            MaterialTheme.colorScheme.primary
+                                            Color.Black
                                         else
                                             MaterialTheme.colorScheme.outline,
                                         shape = MaterialTheme.shapes.small

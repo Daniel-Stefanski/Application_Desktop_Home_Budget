@@ -28,6 +28,8 @@ object Prefs {
         val rememberedUserId: Int? = null, // auto-login
         val lastLoggedUserId: Int? = null, // aktualna sesja
         val themeMode: String = "SYSTEM",
+        val supabaseUid: String? = null,
+        val pendingPasswordResetEmail: String? = null,
 
         // Powiadomienie budżetu
         val lastBudgetWarningDate: String? = null,
@@ -75,7 +77,31 @@ object Prefs {
 
     fun getLastLoggedUser(): Int? = data.lastLoggedUserId
     fun resetAll() {
-        data = data.copy(rememberedUserId = null, lastLoggedUserId = null)
+        data = data.copy(
+            rememberedUserId = null,
+            lastLoggedUserId = null,
+            supabaseUid = null,
+            pendingPasswordResetEmail = null
+        )
+        save()
+    }
+
+    fun setSupabaseUid(uid: String?) {
+        data = data.copy(supabaseUid = uid)
+        save()
+    }
+
+    fun getSupabaseUid(): String? = data.supabaseUid
+
+    fun setPendingPasswordResetEmail(email: String?) {
+        data = data.copy(pendingPasswordResetEmail = email)
+        save()
+    }
+
+    fun getPendingPasswordResetEmail(): String? = data.pendingPasswordResetEmail
+
+    fun clearPendingPasswordResetEmail() {
+        data = data.copy(pendingPasswordResetEmail = null)
         save()
     }
 

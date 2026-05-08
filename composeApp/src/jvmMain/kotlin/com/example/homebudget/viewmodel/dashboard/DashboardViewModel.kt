@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.homebudget.data.database.AppDatabase
 import com.example.homebudget.data.dto.CategorySum
 import com.example.homebudget.data.entity.MonthlyBudget
+import com.example.homebudget.data.sync.DashboardSyncManager
+import com.example.homebudget.data.sync.RemoteSync
 import com.example.homebudget.utils.date.DateRanges
 import com.example.homebudget.utils.formatting.DateFormatter
 import com.example.homebudget.utils.money.AmountParser
@@ -43,6 +45,10 @@ class DashboardViewModel : ViewModel() {
             selectedMonth = today.monthValue
         )
         loadData()
+        viewModelScope.launch {
+            DashboardSyncManager.sync()
+            loadData()
+        }
     }
     // Ręczne odświeżenie danych dashboardu
     fun reload() {
@@ -51,8 +57,7 @@ class DashboardViewModel : ViewModel() {
     // Aktualizacja wartości budżetu wpisywanej przez użytkownika
     fun onBudgetChanged(value: String) {
         _uiState.value = _uiState.value.copy(
-            budgetInput = value,
-            usePreviousBudget = false // ręczna zmiana wyłącza checkbox
+            budgetInput = value
         )
     }
     // Zapis nowego budżetu miesięcznego do bazy danych
@@ -69,7 +74,8 @@ class DashboardViewModel : ViewModel() {
                     budget = amount,
                     isDefault = current.usePreviousBudget
                 )
-                monthlyBudgetDao.insertBudget(newBudget)
+                val localId = monthlyBudgetDao.insertBudget(newBudget).toInt()
+                RemoteSync.syncBudget(newBudget.copy(id = localId))
                 // Odśwież dane
                 loadData()
             } catch (e: Exception) {
@@ -202,6 +208,9 @@ class DashboardViewModel : ViewModel() {
                 val todayDate = LocalDate.now().toString()
                 val lastWarningDate = Prefs.getLastBudgetWarningDate()
                 val shouldShowWarning = isCurrentMonth && budget > 0.0 && totalSpent > budget && lastWarningDate != todayDate
+                if (shouldShowWarning) {
+                    Prefs.setLastBudgetWarningDate(todayDate)
+                }
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -213,7 +222,7 @@ class DashboardViewModel : ViewModel() {
                     categories = categories,
                     categoryColors = categoryColors,
                     isCurrentMonth = isCurrentMonth,
-                    budgetInput = if (budget > 0) budget.toString() else "",
+                    budgetInput = if (budget > 0) AmountParser.format(budget.toString()) else "",
                     showBudgetExceededDialog = shouldShowWarning,
                     error = null,
                     canEditBudget = isCurrentMonth,

@@ -111,7 +111,8 @@ fun BarChart(
             val label = (i * usedStep).toInt().toString()
             val measured = textMeasurer.measure(AnnotatedString(label), style = labelStyle)
             // tekst wyśrodkowany względem linii (i nie “ucina się” na górze)
-            val textY = max(topPadding, y - measured.size.height / 2f)
+            val textY = (y - measured.size.height / 2f)
+                .coerceIn(0f, size.height - measured.size.height.toFloat())
             drawText(
                 textMeasurer = textMeasurer,
                 text = AnnotatedString(label),

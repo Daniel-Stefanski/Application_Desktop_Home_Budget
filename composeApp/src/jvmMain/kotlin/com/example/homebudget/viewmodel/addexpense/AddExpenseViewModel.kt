@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.homebudget.data.database.AppDatabase
 import com.example.homebudget.data.entity.Expense
+import com.example.homebudget.data.sync.RemoteSync
 import com.example.homebudget.utils.date.DateConverters
 import com.example.homebudget.utils.money.AmountParser
 import com.example.homebudget.utils.settings.Prefs
@@ -274,7 +275,8 @@ class AddExpenseViewModel : ViewModel() {
                     // reszta pól ma wartości domyślne w data class
                 )
 
-                expenseDao.insertExpense(expense)
+                val localId = expenseDao.insertExpense(expense).toInt()
+                RemoteSync.syncExpenseInsert(localId, expense)
 
                 _uiState.value = current.copy(
                     showSavedDialog = true,

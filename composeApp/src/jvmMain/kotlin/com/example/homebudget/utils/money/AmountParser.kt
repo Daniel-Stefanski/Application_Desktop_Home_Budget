@@ -13,6 +13,7 @@ import java.util.Locale
  *
  * Obsługuje:
  * - spacje: "1 200"
+ * - NBSP
  * - przecinki: "12,50"
  *
  * Zasady:
@@ -24,26 +25,32 @@ import java.util.Locale
  */
 object AmountParser {
     private val symbols = DecimalFormatSymbols(Locale.forLanguageTag("pl-PL")).apply {
+        groupingSeparator = ' '
         decimalSeparator = ','
     }
-    private val formatter = DecimalFormat("#0,00", symbols).apply {
+    private val formatter = DecimalFormat("#,##0.00", symbols).apply {
         roundingMode = RoundingMode.HALF_UP
         isParseBigDecimal = true
     }
     /**
      * Sanitizacja INPUTU (pisanie w polu)
-     * - usuwa kropki
-     * - zostawia tylko cyfry i jeden przecinek
+     * - blokuje kropki
+     * - zostawia cyfry, spacje i jeden przecinek
      * - max 2 cyfry po przecinku
      */
     fun sanitize(input: String): String {
         val noDots = input.replace(".", "")
-        val filtered = noDots.replace(Regex("[^0-9,]"), "")
-
+        val filtered = noDots.replace(Regex("[^0-9,\\s\\u00A0]"), "")
+            .replace('\u00A0', ' ')
         val parts = filtered.split(",")
+        val integerPart = parts.firstOrNull()
+            ?.replace(Regex("\\s+"), " ")
+            ?.trimStart()
+            ?: ""
         return when {
-            parts.size == 1 -> parts[0]
-            parts.size >= 2 -> parts[0] + "," + parts[1].take(2)
+            parts.size == 1 -> integerPart
+            integerPart.isBlank() -> integerPart
+            parts.size >= 2 -> integerPart + "," + parts.drop(1).joinToString("").filter { it.isDigit() }.take(2)
             else -> ""
         }
     }
@@ -64,7 +71,12 @@ object AmountParser {
         if (text.isBlank()) return null
 
         return try {
-            val normalized = text.replace(",", ".")
+            val normalized = text
+                .replace(" ", "")
+                .replace("\u00A0", "")
+                .replace(",", ".")
+                .replace(Regex("[^0-9.]"), "")
+            if (normalized.isBlank()) return null
             BigDecimal(normalized).toDouble()
         } catch (_: Exception) {
             null

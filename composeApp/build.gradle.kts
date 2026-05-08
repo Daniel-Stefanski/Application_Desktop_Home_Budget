@@ -34,6 +34,12 @@ kotlin {
             implementation("androidx.sqlite:sqlite-bundled:$sqliteVersion")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
             implementation("org.json:json:20240303")
+
+            implementation("io.github.jan-tennert.supabase:supabase-kt:2.4.3")
+            implementation("io.github.jan-tennert.supabase:postgrest-kt:2.4.3")
+            implementation("io.github.jan-tennert.supabase:gotrue-kt:2.4.3")
+            implementation("io.github.jan-tennert.supabase:functions-kt:2.4.3")
+            implementation("io.ktor:ktor-client-okhttp:2.3.7")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -50,6 +56,13 @@ dependencies {
     add("kspJvm", "androidx.room:room-compiler:$roomVersion")
 }
 
+configurations.all {
+    resolutionStrategy.force(
+        "org.jetbrains.kotlinx:kotlinx-datetime:0.6.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.0"
+    )
+}
+
 ksp {
     // Schemat bazy danych w Github
     arg("room.schemaLocation", "$projectDir/schemas")
@@ -62,7 +75,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Msi)
             packageName = "HomeBudget"
-            packageVersion = "1.0.4"
+            packageVersion = "1.0.0"
 
             windows {
                 menu = true // Start Menu
