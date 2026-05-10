@@ -105,7 +105,7 @@ fun DashboardScreen() {
             ) {
                 // Ekran ładowania
                 if (state.isLoading) {
-                    LoadingState()
+                    LoadingState(message = "Ładowanie danych...")
                 // Ekran błędu (np. brak usera)
                 } else if (state.error != null) {
                     ErrorState(message = state.error!!)

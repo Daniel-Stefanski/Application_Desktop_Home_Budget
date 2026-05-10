@@ -80,7 +80,7 @@ fun StatisticsScreen() {
             ) {
 
                 if (state.isLoading) {
-                    LoadingState()
+                    LoadingState(message = "Ładowanie danych...")
                     return@Box
                 }
 

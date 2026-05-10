@@ -162,7 +162,12 @@ fun BillsPlannerScreen(
                     Spacer(Modifier.height(16.dp))
 
                     if (state.isLoading) {
-                        LoadingState()
+                        LoadingState(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            message = "Ładowanie danych..."
+                        )
                     } else if (state.bills.isEmpty()) {
                         EmptyState(text = "📝 Brak zaplanowanych rachunków.")
                     } else {
